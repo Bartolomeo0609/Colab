@@ -1,0 +1,94 @@
+# ==========================================
+# Project: NLP for AI Training (Sentiment Analysis)
+
+# ==========================================
+
+import pandas as pd
+import numpy as np
+import re
+import nltk
+from nltk.corpus import stopwords
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+
+# Download NLTK resources
+nltk.download('stopwords')
+nltk.download('punkt')
+
+# ==========================================
+# 1️⃣ Simulated training data
+# ==========================================
+data = {
+    'text': [
+        "I love this product, it’s amazing!",
+        "Worst experience ever, I hate it.",
+        "The service was good but could be better.",
+        "Absolutely fantastic quality, 10/10!",
+        "Not bad, but delivery was slow.",
+        "Terrible, I’ll never buy again.",
+        "It’s okay, not great but acceptable."
+    ],
+    'label': ['positive', 'negative', 'neutral', 'positive', 'neutral', 'negative', 'neutral']
+}
+
+df = pd.DataFrame(data)
+
+# ==========================================
+# 2️⃣ Basic text cleaning
+# ==========================================
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r'[^a-z\s]', '', text)  # remove symbols and numbers
+    tokens = nltk.word_tokenize(text)
+    stop_words = set(stopwords.words('english'))
+    tokens = [word for word in tokens if word not in stop_words]
+    return ' '.join(tokens)
+
+df['clean_text'] = df['text'].apply(clean_text)
+
+# ==========================================
+# 3️⃣ Text vectorization (TF-IDF)
+# ==========================================
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(df['clean_text'])
+y = df['label']
+
+# ==========================================
+# 4️⃣ Train-test split
+# ==========================================
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# ==========================================
+# 5️⃣ Model training
+# ==========================================
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# ==========================================
+# 6️⃣ Model evaluation
+# ==========================================
+y_pred = model.predict(X_test)
+
+print("🔍 Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\n📊 Classification Report:")
+print(classification_report(y_test, y_pred))
+
+# ==========================================
+# 7️⃣ Test with new data
+# ==========================================
+new_texts = [
+    "I’m so happy with the service!",
+    "This is the worst purchase ever.",
+    "It was okay, nothing special."
+]
+
+cleaned = [clean_text(t) for t in new_texts]
+X_new = vectorizer.transform(cleaned)
+predictions = model.predict(X_new)
+
+for text, pred in zip(new_texts, predictions):
+    print(f"\n🗣️ Text: {text}\n➡️ Prediction: {pred}")
